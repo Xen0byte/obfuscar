@@ -208,5 +208,40 @@ namespace ObfuscarTests
 
             Assert.Equal(4, expected.Methods.Count);
         }
+
+        [Fact]
+        public void CheckHideStringsClassExistsWithManyStrings()
+        {
+            string outputPath = TestHelper.OutputPath;
+            string xml = string.Format(
+                @"<?xml version='1.0'?>" +
+                @"<Obfuscator>" +
+                @"<Var name='InPath' value='{0}' />" +
+                @"<Var name='OutPath' value='{1}' />" +
+                @"<Var name='HideStrings' value='true' />" +
+                @"<Module file='$(InPath){2}ManyStrings.dll' />" +
+                @"</Obfuscator>", TestHelper.InputPath, outputPath, Path.DirectorySeparatorChar);
+
+            TestHelper.BuildAndObfuscate("ManyStrings", string.Empty, xml, true);
+            AssemblyDefinition assmDef = AssemblyDefinition.ReadAssembly(
+                Path.Combine(outputPath, "ManyStrings.dll"));
+
+            Assert.Equal(3, assmDef.MainModule.Types.Count);
+
+            TypeDefinition expected = null;
+            foreach (var type in assmDef.MainModule.Types)
+            {
+                if (type.FullName.Contains("PrivateImplementation"))
+                {
+                    expected = type;
+                }
+            }
+
+            Assert.NotNull(expected);
+
+            Assert.Equal(3, expected.Fields.Count);
+
+            Assert.Equal(65530, expected.Methods.Count);
+        }
     }
 }
